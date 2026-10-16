@@ -1,0 +1,933 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101713">
+<title>ScopeSignal — Know What Changed</title>
+<meta name="description" content="A practical scope-change review workspace for freelancers and independent service providers. Compare client requests with agreed deliverables and prepare a clear response.">
+<style>
+:root {
+  color-scheme: dark;
+  --bg:#101713;
+  --panel:#19221c;
+  --panel2:#202b24;
+  --line:#344238;
+  --text:#f1f5ee;
+  --muted:#a6b4a8;
+  --green:#c5f36a;
+  --green-dark:#263719;
+  --amber:#ffd58a;
+  --red:#ffaaa0;
+  --radius:18px;
+}
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  line-height:1.6;
+}
+button,input,textarea,select { font:inherit; }
+button { cursor:pointer; }
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible {
+  outline:2px solid var(--green);
+  outline-offset:3px;
+}
+a { color:var(--green); }
+.shell { width:min(1120px,100% - 32px); margin:auto; }
+header {
+  border-bottom:1px solid var(--line);
+  position:sticky;
+  top:0;
+  z-index:5;
+  background:rgba(16,23,19,.96);
+  backdrop-filter:blur(12px);
+}
+.topbar {
+  min-height:72px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:16px;
+}
+.brand {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:19px;
+  font-weight:800;
+  letter-spacing:-.5px;
+}
+.brand-mark {
+  width:34px;
+  height:34px;
+  border-radius:11px;
+  background:var(--green);
+  color:#182115;
+  display:grid;
+  place-items:center;
+  font-weight:900;
+}
+.brand small {
+  display:block;
+  color:var(--muted);
+  font-size:10px;
+  letter-spacing:1.5px;
+  font-weight:700;
+}
+.top-status {
+  color:var(--green);
+  font-size:12px;
+  border:1px solid var(--line);
+  padding:6px 10px;
+  border-radius:99px;
+}
+nav {
+  display:flex;
+  gap:8px;
+  padding:0 0 13px;
+  overflow-x:auto;
+}
+nav a {
+  text-decoration:none;
+  color:var(--muted);
+  font-size:13px;
+  white-space:nowrap;
+  padding:8px 12px;
+  border-radius:9px;
+}
+nav a:hover { color:var(--text); background:var(--panel2); }
+main { padding:30px 0 60px; }
+.hero {
+  padding:34px 0 30px;
+  display:grid;
+  grid-template-columns:1.3fr .7fr;
+  gap:28px;
+  align-items:center;
+}
+.eyebrow {
+  color:var(--green);
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:2px;
+  text-transform:uppercase;
+}
+h1 {
+  font-size:clamp(35px,6vw,62px);
+  line-height:1.04;
+  letter-spacing:-2.5px;
+  margin:14px 0;
+}
+h1 span { color:var(--green); }
+.hero p { color:var(--muted); max-width:620px; }
+.hero-note {
+  border:1px solid var(--line);
+  background:linear-gradient(145deg,var(--panel),#18251b);
+  border-radius:var(--radius);
+  padding:24px;
+}
+.hero-note strong { font-size:16px; }
+.hero-note p { font-size:13px; }
+.mini-step {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-top:15px;
+  font-size:13px;
+}
+.mini-step b {
+  display:grid;
+  place-items:center;
+  min-width:29px;
+  height:29px;
+  border-radius:9px;
+  background:var(--green-dark);
+  color:var(--green);
+}
+.section-heading {
+  display:flex;
+  justify-content:space-between;
+  align-items:end;
+  gap:16px;
+  margin:35px 0 16px;
+}
+.section-heading h2 { margin:0; font-size:23px; letter-spacing:-.6px; }
+.section-heading p { margin:4px 0 0; color:var(--muted); font-size:13px; }
+.grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+.card {
+  border:1px solid var(--line);
+  background:var(--panel);
+  border-radius:var(--radius);
+  padding:23px;
+  min-width:0;
+}
+.card h3 { margin:0 0 5px; font-size:17px; }
+.card-intro { margin:0 0 20px; color:var(--muted); font-size:13px; }
+.field { margin:15px 0; }
+label {
+  display:block;
+  font-size:12px;
+  font-weight:700;
+  color:#dbe4dc;
+  margin-bottom:7px;
+}
+input,textarea,select {
+  width:100%;
+  background:#111914;
+  border:1px solid var(--line);
+  color:var(--text);
+  border-radius:10px;
+  padding:12px 13px;
+}
+textarea { min-height:100px; resize:vertical; }
+input::placeholder,textarea::placeholder { color:#718075; }
+.hint { font-size:11px; color:var(--muted); margin-top:6px; }
+.actions { display:flex; flex-wrap:wrap; gap:9px; margin-top:17px; }
+.btn {
+  border:1px solid var(--line);
+  background:var(--panel2);
+  color:var(--text);
+  border-radius:10px;
+  padding:11px 15px;
+  font-size:13px;
+  font-weight:750;
+}
+.btn.primary { background:var(--green); color:#192216; border-color:var(--green); }
+.btn:hover { filter:brightness(1.08); }
+.btn:disabled { opacity:.45; cursor:not-allowed; }
+.notice {
+  border:1px solid #46543c;
+  background:#202b1d;
+  color:#dce9d2;
+  padding:13px 15px;
+  border-radius:12px;
+  font-size:12px;
+  margin:15px 0 0;
+}
+.results { margin-top:20px; }
+.empty {
+  border:1px dashed var(--line);
+  padding:26px;
+  text-align:center;
+  border-radius:14px;
+  color:var(--muted);
+  font-size:13px;
+}
+.finding {
+  padding:15px;
+  background:#111914;
+  border:1px solid var(--line);
+  border-radius:12px;
+  margin:10px 0;
+}
+.finding-top { display:flex; justify-content:space-between; gap:10px; align-items:start; }
+.finding h4 { margin:0; font-size:14px; }
+.finding p { font-size:12px; color:var(--muted); margin:8px 0 0; }
+.tag {
+  border-radius:99px;
+  padding:3px 8px;
+  font-size:10px;
+  font-weight:800;
+  white-space:nowrap;
+}
+.tag.high { color:var(--red); background:#3a211f; }
+.tag.medium { color:var(--amber); background:#3b3020; }
+.tag.low { color:var(--green); background:#27351f; }
+.scoreline {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:15px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  margin-bottom:12px;
+}
+.scoreline strong { font-size:15px; }
+.scoreline span { color:var(--muted); font-size:12px; }
+#response { min-height:190px; }
+.history-item {
+  padding:15px 0;
+  border-bottom:1px solid var(--line);
+}
+.history-item:last-child { border-bottom:0; }
+.history-item strong { display:block; font-size:13px; }
+.history-item small { color:var(--muted); }
+.history-item p { color:var(--muted); font-size:12px; margin:6px 0; }
+.text-btn {
+  background:none;
+  border:0;
+  color:var(--green);
+  padding:5px 8px 5px 0;
+  font-size:12px;
+  font-weight:700;
+}
+footer {
+  border-top:1px solid var(--line);
+  padding:24px 0 35px;
+  color:var(--muted);
+  font-size:12px;
+}
+footer strong { color:var(--text); }
+.footer-grid { display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap; }
+.hidden { display:none !important; }
+@media(max-width:760px) {
+  .hero,.grid { grid-template-columns:1fr; }
+  .hero { padding-top:22px; gap:15px; }
+  h1 { letter-spacing:-1.7px; }
+  .card { padding:18px; }
+  .section-heading { align-items:start; flex-direction:column; }
+  .top-status { font-size:10px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="shell">
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-mark">S</div>
+        <div>ScopeSignal<small>BY LINA CLOUD</small></div>
+      </div>
+      <div class="top-status">SCOPE REVIEW WORKSPACE</div>
+    </div>
+    <nav aria-label="Main navigation">
+      <a href="#overview">Overview</a>
+      <a href="#agreement">Agreement memory</a>
+      <a href="#review">Review a request</a>
+      <a href="#history">Review history</a>
+    </nav>
+  </div>
+</header>
+
+<main class="shell">
+  <section class="hero" id="overview">
+    <div>
+      <div class="eyebrow">Protect the work. Clarify the agreement.</div>
+      <h1>Know what changed.<br><span>Respond with clarity.</span></h1>
+      <p>
+        ScopeSignal helps freelancers and independent service providers compare
+        new client requests against their original agreement, identify possible
+        scope changes, and prepare a professional response.
+      </p>
+      <div class="actions">
+        <a class="btn primary" href="#agreement" style="text-decoration:none">Set up an agreement ↓</a>
+        <a class="btn" href="#review" style="text-decoration:none">Review a request</a>
+      </div>
+    </div>
+    <aside class="hero-note">
+      <strong>A clearer way to handle “one more thing.”</strong>
+      <p>Keep the original agreement in view before deciding how to respond to a new request.</p>
+      <div class="mini-step"><b>01</b><span>Record the agreed deliverables and limits.</span></div>
+      <div class="mini-step"><b>02</b><span>Compare a new request against that agreement.</span></div>
+      <div class="mini-step"><b>03</b><span>Review the evidence and prepare your reply.</span></div>
+    </aside>
+  </section>
+
+  <section id="agreement">
+    <div class="section-heading">
+      <div>
+        <div class="eyebrow">01 — Agreement memory</div>
+        <h2>What did you agree to?</h2>
+        <p>Save the baseline before evaluating new requests.</p>
+      </div>
+    </div>
+    <div class="card">
+      <form id="agreementForm">
+        <div class="grid">
+          <div class="field">
+            <label for="project">Project or client label *</label>
+            <input id="project" required maxlength="100" placeholder="e.g. Greenleaf — monthly content">
+          </div>
+          <div class="field">
+            <label for="service">Service type</label>
+            <select id="service">
+              <option>Social media management</option>
+              <option>Content writing</option>
+              <option>Graphic design</option>
+              <option>Web design or development</option>
+              <option>Virtual assistance</option>
+              <option>Consulting</option>
+              <option>Other freelance service</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid">
+          <div class="field">
+            <label for="fee">Agreed fee (optional)</label>
+            <input id="fee" maxlength="100" placeholder="e.g. ₦150,000 per month">
+          </div>
+          <div class="field">
+            <label for="deadline">Agreed deadline or period</label>
+            <input id="deadline" maxlength="150" placeholder="e.g. 30 October, or monthly">
+          </div>
+        </div>
+        <div class="field">
+          <label for="deliverables">Included deliverables *</label>
+          <textarea id="deliverables" required placeholder="List exactly what is included. Example: 12 feed posts per month; captions for each post; one monthly content calendar."></textarea>
+        </div>
+        <div class="grid">
+          <div class="field">
+            <label for="revisions">Revision limit</label>
+            <input id="revisions" maxlength="200" placeholder="e.g. 2 revision rounds per design">
+          </div>
+          <div class="field">
+            <label for="exclusions">Explicit exclusions</label>
+            <textarea id="exclusions" placeholder="e.g. Paid ad management, weekend support, video editing"></textarea>
+          </div>
+        </div>
+        <div class="field">
+          <label for="terms">Other terms or boundaries</label>
+          <textarea id="terms" placeholder="Response hours, approval process, additional fees, client responsibilities, or other relevant terms."></textarea>
+        </div>
+        <div class="actions">
+          <button class="btn primary" type="submit">Save agreement</button>
+          <button class="btn" type="button" id="clearAgreement">Clear form</button>
+        </div>
+        <div class="notice">
+          Use a project label rather than sensitive client information. This prototype saves data in this browser on this device.
+        </div>
+      </form>
+      <div id="agreementStatus" class="hint" role="status" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section id="review">
+    <div class="section-heading">
+      <div>
+        <div class="eyebrow">02 — Request review</div>
+        <h2>Check the new request</h2>
+        <p>Compare what the client is asking for with the agreement you saved.</p>
+      </div>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <h3>New client request</h3>
+        <p class="card-intro">Paste the request or summarize it faithfully. Avoid including passwords or private information.</p>
+        <form id="reviewForm">
+          <div class="field">
+            <label for="request">What is the client asking for? *</label>
+            <textarea id="request" required placeholder="Paste the message or describe the requested change..."></textarea>
+          </div>
+          <div class="field">
+            <label for="context">Additional context (optional)</label>
+            <textarea id="context" placeholder="Anything important about prior conversations, approved changes, or timing?"></textarea>
+          </div>
+          <button class="btn primary" type="submit">Compare with agreement →</button>
+        </form>
+        <div class="hint">ScopeSignal flags possible changes. It cannot know whether a request was approved elsewhere unless you provide that context.</div>
+      </div>
+      <div class="card">
+        <h3>Review findings</h3>
+        <p class="card-intro">Evidence-based prompts to help you make your own decision.</p>
+        <div id="results" class="results" aria-live="polite">
+          <div class="empty">Save an agreement, then submit a client request to see findings here.</div>
+        </div>
+        <div id="exportActions" class="actions hidden">
+          <button type="button" class="btn" id="exportReview">Export review (.txt)</button>
+          <button type="button" class="btn" id="saveReview">Save to history</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="replySection" class="hidden">
+    <div class="section-heading">
+      <div>
+        <div class="eyebrow">03 — Your response</div>
+        <h2>Reply professionally</h2>
+        <p>Review and edit this draft before sending it to your client.</p>
+      </div>
+    </div>
+    <div class="card">
+      <label for="response">Editable response draft</label>
+      <textarea id="response"></textarea>
+      <div class="actions">
+        <button type="button" class="btn primary" id="copyResponse">Copy response</button>
+        <button type="button" class="btn" id="regenerateResponse">Create draft again</button>
+      </div>
+      <div id="copyStatus" class="hint" role="status" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section id="history">
+    <div class="section-heading">
+      <div>
+        <div class="eyebrow">04 — Your records</div>
+        <h2>Review history</h2>
+        <p>See saved reviews on this device and export them for your records.</p>
+      </div>
+      <div class="actions" style="margin:0">
+        <button type="button" class="btn" id="exportHistory">Export history (.json)</button>
+        <button type="button" class="btn" id="clearHistory">Clear history</button>
+      </div>
+    </div>
+    <div class="card">
+      <div id="historyList"><div class="empty">Your saved reviews will appear here.</div></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="shell footer-grid">
+    <div><strong>ScopeSignal</strong><br>Independent project by Lina Cloud.</div>
+    <div>Decision support, not legal advice.<br>Always verify findings against the full agreement.</div>
+  </div>
+</footer>
+
+<script>
+"use strict";
+
+const STORAGE_AGREEMENT = "scopesignal_agreement_v1";
+const STORAGE_HISTORY = "scopesignal_history_v1";
+
+let currentReview = null;
+let currentFindings = [];
+
+const $ = id => document.getElementById(id);
+
+function safeLoad(key, fallback) {
+  try {
+    const value = localStorage.getItem(key);
+    return value ? JSON.parse(value) : fallback;
+  } catch (error) {
+    return fallback;
+  }
+}
+
+function safeSave(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+    return true;
+  } catch (error) {
+    alert("Your browser could not save this information. Check available device storage and browser settings.");
+    return false;
+  }
+}
+
+function getAgreement() {
+  return safeLoad(STORAGE_AGREEMENT, null);
+}
+
+function getHistory() {
+  return safeLoad(STORAGE_HISTORY, []);
+}
+
+function readAgreementForm() {
+  return {
+    project: $("project").value.trim(),
+    service: $("service").value,
+    fee: $("fee").value.trim(),
+    deadline: $("deadline").value.trim(),
+    deliverables: $("deliverables").value.trim(),
+    revisions: $("revisions").value.trim(),
+    exclusions: $("exclusions").value.trim(),
+    terms: $("terms").value.trim(),
+    updatedAt: new Date().toISOString()
+  };
+}
+
+function fillAgreementForm(a) {
+  if (!a) return;
+  $("project").value = a.project || "";
+  $("service").value = a.service || "Social media management";
+  $("fee").value = a.fee || "";
+  $("deadline").value = a.deadline || "";
+  $("deliverables").value = a.deliverables || "";
+  $("revisions").value = a.revisions || "";
+  $("exclusions").value = a.exclusions || "";
+  $("terms").value = a.terms || "";
+}
+
+function normalize(s) {
+  return (s || "").toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+function splitItems(text) {
+  return (text || "")
+    .split(/\n|;|•/)
+    .map(x => x.replace(/^[\s\-*]+/, "").trim())
+    .filter(x => x.length > 2);
+}
+
+function includesAny(text, words) {
+  return words.some(word => text.includes(word));
+}
+
+function analyzeRequest(agreement, request, context) {
+  const r = normalize(request);
+  const c = normalize(context);
+  const all = r + " " + c;
+  const findings = [];
+
+  function add(title, level, evidence, explanation) {
+    findings.push({ title, level, evidence, explanation });
+  }
+
+  const exclusions = splitItems(agreement.exclusions);
+  const matchedExclusions = exclusions.filter(item => {
+    const itemWords = normalize(item).split(/[^a-z0-9₦]+/).filter(w => w.length >= 4);
+    return itemWords.length > 0 &&
+      itemWords.some(word => r.includes(word));
+  });
+
+  matchedExclusions.forEach(item => {
+    add(
+      "Possible overlap with an exclusion",
+      "high",
+      "Agreement exclusion: “" + item + "”",
+      "The request contains wording that may relate to an explicitly excluded item. Confirm the intended work and whether an exception was agreed."
+    );
+  });
+
+  const deliverables = splitItems(agreement.deliverables);
+  const matchedDeliverables = deliverables.filter(item => {
+    const words = normalize(item).split(/[^a-z0-9₦]+/).filter(w => w.length >= 4);
+    if (!words.length) return false;
+    const matches = words.filter(word => r.includes(word)).length;
+    return matches / words.length >= 0.35;
+  });
+
+  if (deliverables.length && matchedDeliverables.length === 0) {
+    add(
+      "No clear match to listed deliverables",
+      "medium",
+      "Saved deliverables: “" + agreement.deliverables.slice(0, 450) + "”",
+      "The simple text check did not find a strong wording match. This may be a new task, but it could also be described differently from the agreement."
+    );
+  }
+
+  const additionalWork = [
+    ["additional", "extra", "another", "more"],
+    ["also create", "also make", "also design", "also write"],
+    ["new page", "new website", "new campaign", "new platform"],
+    ["video editing", "edit the video", "shoot a video"],
+    ["manage the ads", "paid ads", "ad campaign"],
+    ["weekend", "every day", "daily posting", "24/7"],
+    ["urgent", "today", "immediately", "as soon as possible", "tonight"]
+  ];
+
+  additionalWork.forEach((group, index) => {
+    if (includesAny(r, group)) {
+      const labels = [
+        "Possible additional-work wording",
+        "Possible added deliverable",
+        "Possible new project component",
+        "Possible video-production work",
+        "Possible advertising work",
+        "Possible expanded availability",
+        "Possible urgency or deadline change"
+      ];
+      const descriptions = [
+        "The message uses wording associated with additional work. Compare the exact request with the scope and quantities agreed.",
+        "The message may be asking for an additional deliverable. Check whether this item is included in the agreement.",
+        "A new page, website, campaign, or platform may be a separate component. Confirm what was originally included.",
+        "Video production or editing may differ from other content services. Verify the deliverables in your agreement.",
+        "Advertising management may be distinct from organic social media work. Check the agreed service boundaries.",
+        "The request may imply a broader availability commitment. Compare it with your stated working hours and response terms.",
+        "The request contains urgency language. Check whether the requested timing changes the agreed deadline or requires reprioritization."
+      ];
+      add(labels[index], index === 6 ? "high" : "medium", "Request wording: “" + request.slice(0, 350) + "”", descriptions[index]);
+    }
+  });
+
+  const revisionLimit = normalize(agreement.revisions);
+  if (revisionLimit && includesAny(r, ["revise again", "another revision", "one more revision", "third revision", "fourth revision", "redo it again"])) {
+    add(
+      "Check the revision allowance",
+      "medium",
+      "Agreement revision terms: “" + agreement.revisions + "”",
+      "The message may involve further revisions. Confirm the number of rounds already used and how your agreement defines a revision round."
+    );
+  }
+
+  if (agreement.deadline && includesAny(r, ["today", "tonight", "tomorrow", "urgent", "immediately", "asap", "right now"])) {
+    add(
+      "Check the agreed timeline",
+      "medium",
+      "Agreed timeline: “" + agreement.deadline + "”",
+      "The request uses time-sensitive language. Compare the requested timing with the agreed schedule before accepting it."
+    );
+  }
+
+  if (agreement.fee && includesAny(r, ["free", "no extra charge", "included at no cost", "without extra payment", "same price"])) {
+    add(
+      "Check the payment terms",
+      "medium",
+      "Agreed fee: “" + agreement.fee + "”",
+      "The message refers to work being included without extra payment. Verify whether the request is covered by the original fee."
+    );
+  }
+
+  if (includesAny(all, ["already approved", "we agreed", "as agreed", "you promised", "we discussed"])) {
+    add(
+      "Confirm previous approvals or discussions",
+      "low",
+      "Context or request mentions a prior discussion or approval.",
+      "This review cannot see earlier messages. Check the original conversation and update the agreement record if a change was approved."
+    );
+  }
+
+  if (!findings.length) {
+    add(
+      "No obvious scope-change signals found",
+      "low",
+      "No configured wording checks were triggered.",
+      "This is not proof that the request is included. Review the wording manually, especially quantities, deadlines, responsibilities, and exclusions."
+    );
+  }
+
+  return findings;
+}
+
+function severityCount(findings) {
+  return findings.reduce((out, f) => {
+    out[f.level] = (out[f.level] || 0) + 1;
+    return out;
+  }, {});
+}
+
+function escapeHTML(s) {
+  return String(s ?? "").replace(/[&<>"']/g, ch => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[ch]));
+}
+
+function renderFindings(findings) {
+  const counts = severityCount(findings);
+  let html = '<div class="scoreline"><div><strong>Review signals</strong><br><span>Prompts for human review, not a definitive verdict</span></div><div style="text-align:right"><strong>' + findings.length + '</strong><br><span>finding(s)</span></div></div>';
+  html += '<p class="hint">Higher-priority signals appear first. A keyword match can be wrong; confirm the context before responding.</p>';
+
+  const sorted = [...findings].sort((a,b) => {
+    const order = {high:0,medium:1,low:2};
+    return order[a.level] - order[b.level];
+  });
+
+  sorted.forEach(f => {
+    html += '<article class="finding"><div class="finding-top"><h4>' +
+      escapeHTML(f.title) + '</h4><span class="tag ' + escapeHTML(f.level) + '">' +
+      escapeHTML(f.level.toUpperCase()) + '</span></div><p><strong>Evidence:</strong> ' +
+      escapeHTML(f.evidence) + '</p><p>' + escapeHTML(f.explanation) + '</p></article>';
+  });
+
+  $("results").innerHTML = html;
+}
+
+function makeDraft(agreement, findings, request, context) {
+  const hasHigh = findings.some(f => f.level === "high");
+  const hasMedium = findings.some(f => f.level === "medium");
+  const opening = "Hi,\n\nThanks for sharing this request. I've reviewed it against our current project agreement.";
+
+  let middle;
+  if (hasHigh || hasMedium) {
+    middle = "\n\nI’d like to clarify the scope before confirming the work. The request may involve items or timing that differ from the deliverables and terms we originally agreed.";
+  } else {
+    middle = "\n\nI’d like to confirm how this request fits within our agreed deliverables before I proceed.";
+  }
+
+  let terms = "\n\nOur current agreed deliverables are: " + agreement.deliverables + ".";
+  if (agreement.revisions) terms += "\nOur recorded revision terms are: " + agreement.revisions + ".";
+  if (agreement.fee) terms += "\nThe recorded project fee is: " + agreement.fee + ".";
+  terms += "\n\nCould we confirm whether this request is intended to replace an existing deliverable or be treated as additional work? If it is additional, I can clarify the timeline and any applicable fee before proceeding.";
+
+  const close = "\n\nI want to make sure we're aligned and that the work is delivered to the right standard. Thank you for understanding.\n\nBest regards";
+
+  return opening + middle + terms + close;
+}
+
+function downloadText(filename, text, type) {
+  const blob = new Blob([text], {type: type || "text/plain;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+$("agreementForm").addEventListener("submit", event => {
+  event.preventDefault();
+  const agreement = readAgreementForm();
+  if (!agreement.project || !agreement.deliverables) return;
+
+  if (!safeSave(STORAGE_AGREEMENT, agreement)) return;
+
+  $("agreementStatus").textContent = "Agreement saved on this device. You can now review a request.";
+  currentReview = null;
+  $("results").innerHTML = '<div class="empty">Agreement saved. Enter a new request to start a review.</div>';
+  $("exportActions").classList.add("hidden");
+  $("replySection").classList.add("hidden");
+});
+
+$("clearAgreement").addEventListener("click", () => {
+  $("agreementForm").reset();
+  $("agreementStatus").textContent = "Form cleared. Your previously saved agreement remains saved until you replace it.";
+});
+
+$("reviewForm").addEventListener("submit", event => {
+  event.preventDefault();
+
+  const agreement = getAgreement();
+  if (!agreement) {
+    alert("Please save your agreement first.");
+    location.hash = "agreement";
+    return;
+  }
+
+  const request = $("request").value.trim();
+  const context = $("context").value.trim();
+  if (!request) return;
+
+  currentFindings = analyzeRequest(agreement, request, context);
+  currentReview = {
+    id: Date.now(),
+    project: agreement.project,
+    service: agreement.service,
+    request,
+    context,
+    findings: currentFindings,
+    createdAt: new Date().toISOString()
+  };
+
+  renderFindings(currentFindings);
+  $("response").value = makeDraft(agreement, currentFindings, request, context);
+  $("replySection").classList.remove("hidden");
+  $("exportActions").classList.remove("hidden");
+  $("copyStatus").textContent = "";
+  $("replySection").scrollIntoView({behavior:"smooth",block:"start"});
+});
+
+$("regenerateResponse").addEventListener("click", () => {
+  const agreement = getAgreement();
+  if (!agreement || !currentReview) return;
+  $("response").value = makeDraft(agreement, currentReview.findings, currentReview.request, currentReview.context);
+});
+
+$("copyResponse").addEventListener("click", async () => {
+  const text = $("response").value;
+  try {
+    await navigator.clipboard.writeText(text);
+    $("copyStatus").textContent = "Response copied.";
+  } catch (error) {
+    $("response").focus();
+    $("response").select();
+    $("copyStatus").textContent = "Automatic copy was unavailable. The text is selected—use your device's Copy command.";
+  }
+});
+
+$("exportReview").addEventListener("click", () => {
+  if (!currentReview) return;
+  const agreement = getAgreement();
+  const content = [
+    "SCOPESIGNAL — SCOPE REVIEW",
+    "Project: " + currentReview.project,
+    "Service: " + currentReview.service,
+    "Date: " + currentReview.createdAt,
+    "",
+    "SAVED AGREEMENT",
+    "Deliverables: " + (agreement?.deliverables || ""),
+    "Revisions: " + (agreement?.revisions || ""),
+    "Deadline: " + (agreement?.deadline || ""),
+    "Fee: " + (agreement?.fee || ""),
+    "Exclusions: " + (agreement?.exclusions || ""),
+    "",
+    "CLIENT REQUEST",
+    currentReview.request,
+    "",
+    "ADDITIONAL CONTEXT",
+    currentReview.context || "(None supplied)",
+    "",
+    "FINDINGS",
+    ...currentReview.findings.map((f,i) =>
+      (i+1) + ". [" + f.level.toUpperCase() + "] " + f.title +
+      "\nEvidence: " + f.evidence + "\nExplanation: " + f.explanation
+    ),
+    "",
+    "RESPONSE DRAFT",
+    $("response").value,
+    "",
+    "Note: Automated wording checks are decision support, not legal advice or a definitive determination of scope."
+  ].join("\n");
+
+  downloadText("scopesignal-review.txt", content);
+});
+
+$("saveReview").addEventListener("click", () => {
+  if (!currentReview) return;
+  const history = getHistory();
+  history.unshift({
+    ...currentReview,
+    response: $("response").value
+  });
+  if (safeSave(STORAGE_HISTORY, history.slice(0,100))) {
+    renderHistory();
+    $("historyList").scrollIntoView({behavior:"smooth",block:"start"});
+  }
+});
+
+function renderHistory() {
+  const history = getHistory();
+  if (!history.length) {
+    $("historyList").innerHTML = '<div class="empty">No saved reviews yet. Run a review and choose “Save to history”.</div>';
+    return;
+  }
+
+  $("historyList").innerHTML = history.map(item => {
+    const date = new Date(item.createdAt).toLocaleString();
+    return '<div class="history-item"><strong>' + escapeHTML(item.project) +
+      '</strong><small>' + escapeHTML(date) + '</small><p>' +
+      escapeHTML((item.request || "").slice(0,220)) +
+      ((item.request || "").length > 220 ? "…" : "") +
+      '</p><button class="text-btn" type="button" data-load="' + Number(item.id) + '">View saved review</button>' +
+      '<button class="text-btn" type="button" data-delete="' + Number(item.id) + '">Delete</button></div>';
+  }).join("");
+}
+
+$("historyList").addEventListener("click", event => {
+  const loadId = event.target.dataset.load;
+  const deleteId = event.target.dataset.delete;
+
+  if (loadId) {
+    const item = getHistory().find(x => x.id === Number(loadId));
+    if (!item) return;
+    currentReview = item;
+    currentFindings = item.findings || [];
+    renderFindings(currentFindings);
+    $("response").value = item.response || "";
+    $("request").value = item.request || "";
+    $("context").value = item.context || "";
+    $("replySection").classList.remove("hidden");
+    $("exportActions").classList.remove("hidden");
+    location.hash = "review";
+  }
+
+  if (deleteId) {
+    const updated = getHistory().filter(x => x.id !== Number(deleteId));
+    if (safeSave(STORAGE_HISTORY, updated)) renderHistory();
+  }
+});
+
+$("exportHistory").addEventListener("click", () => {
+  downloadText(
+    "scopesignal-history.json",
+    JSON.stringify(getHistory(), null, 2),
+    "application/json;charset=utf-8"
+  );
+});
+
+$("clearHistory").addEventListener("click", () => {
+  if (!confirm("Delete all saved review history from this browser? This cannot be undone.")) return;
+  if (safeSave(STORAGE_HISTORY, [])) renderHistory();
+});
+
+fillAgreementForm(getAgreement());
+renderHistory();
+</script>
+</body>
+</html>
