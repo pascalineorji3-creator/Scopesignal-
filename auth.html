@@ -123,30 +123,22 @@ footer a { margin-right: 12px; }
   <p class="intro" id="intro">Sign in to access your workspace and keep your client agreements organized.</p>
 
   <section class="panel">
-    <div class="tabs" role="tablist" aria-label="Account access">
-      <button class="tab" id="loginTab" type="button"
-        role="tab" aria-selected="true">Sign in</button>
-      <button class="tab" id="signupTab" type="button"
-        role="tab" aria-selected="false">Create account</button>
+    <div class="tabs" aria-label="Account access">
+      <button class="tab" id="loginTab" type="button" aria-pressed="true">Sign in</button>
+      <button class="tab" id="signupTab" type="button" aria-pressed="false">Create account</button>
     </div>
 
     <form id="authForm">
       <label for="email">Email address</label>
-      <input id="email" name="email" type="email"
-        autocomplete="email" required placeholder="you@example.com">
+      <input id="email" name="email" type="email" autocomplete="email" required placeholder="you@example.com">
 
       <label for="password">Password</label>
-      <input id="password" name="password" type="password"
-        autocomplete="current-password" required minlength="8"
-        placeholder="At least 8 characters">
+      <input id="password" name="password" type="password" autocomplete="current-password" required minlength="8" placeholder="At least 8 characters">
 
       <button class="primary" id="submitButton" type="submit">Sign in</button>
     </form>
 
-    <button class="secondary" id="resetButton" type="button">
-      Forgot your password?
-    </button>
-
+    <button class="secondary" id="resetButton" type="button">Forgot your password?</button>
     <div id="message" role="status" aria-live="polite"></div>
   </section>
 
@@ -160,87 +152,62 @@ footer a { margin-right: 12px; }
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-"use strict";
+(function () {
+  "use strict";
 
-const SUPABASE_URL = "https://ysvbzuemwupajrsoijio.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY =
-  "sb_publishable_5a8RrE4n4TknB0qQZ8zKlQ_2KD5p6vT";
+  const SUPABASE_URL = "https://ysvbzuemwupajrsoijio.supabase.co";
+  const SUPABASE_PUBLISHABLE_KEY =
+    "sb_publishable_5a8RrE4n4TknB0qQZ8zKlQ_2KD5p6vT";
 
-const message = document.getElementById("message");
-const form = document.getElementById("authForm");
-const emailInput = document.getElementById("email");
-const passwordInput = document.getElementById("password");
-const submitButton = document.getElementById("submitButton");
-const resetButton = document.getElementById("resetButton");
-const loginTab = document.getElementById("loginTab");
-const signupTab = document.getElementById("signupTab");
+  const $ = (id) => document.getElementById(id);
+  const message = $("message");
+  const form = $("authForm");
+  const emailInput = $("email");
+  const passwordInput = $("password");
+  const submitButton = $("submitButton");
+  const resetButton = $("resetButton");
+  const loginTab = $("loginTab");
+  const signupTab = $("signupTab");
 
-let mode = "login";
-let supabase = null;
+  let mode = "login";
+  let supabaseClient = null;
 
-function showMessage(text, type = "info") {
-  message.textContent = text;
-  message.className = "show " + type;
-}
-
-function setMode(nextMode) {
-  mode = nextMode;
-  const signingUp = mode === "signup";
-
-  loginTab.setAttribute("aria-selected", String(!signingUp));
-  signupTab.setAttribute("aria-selected", String(signingUp));
-  document.getElementById("heading").textContent =
-    signingUp ? "Create your account." : "Welcome back.";
-  document.getElementById("intro").textContent = signingUp
-    ? "Create a secure account for your ScopeSignal workspace."
-    : "Sign in to access your ScopeSignal workspace.";
-  submitButton.textContent = signingUp ? "Create account" : "Sign in";
-  passwordInput.autocomplete = signingUp ? "new-password" : "current-password";
-  resetButton.hidden = signingUp;
-  message.className = "";
-}
-
-loginTab.addEventListener("click", () => setMode("login"));
-signupTab.addEventListener("click", () => setMode("signup"));
-
-function getWorkspaceUrl() {
-  return new URL("index.html", window.location.href).href;
-}
-
-async function init() {
-  if (!window.supabase || !window.supabase.createClient) {
-    showMessage(
-      "The authentication library could not load. Check your internet connection and reload this page.",
-      "error"
-    );
-    submitButton.disabled = true;
-    return;
+  function showMessage(text, type) {
+    message.textContent = text;
+    message.className = "show " + (type || "info");
   }
 
-  supabase = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_PUBLISHABLE_KEY,
-    {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true
-      }
-    }
-  );
+  function setMode(nextMode) {
+    mode = nextMode;
+    const signingUp = mode === "signup";
 
-  const { data, error } = await supabase.auth.getSession();
-
-  if (error) {
-    showMessage("Could not check your session. Please try again.", "error");
-    return;
+    loginTab.setAttribute("aria-pressed", String(!signingUp));
+    signupTab.setAttribute("aria-pressed", String(signingUp));
+    $("heading").textContent = signingUp
+      ? "Create your account."
+      : "Welcome back.";
+    $("intro").textContent = signingUp
+      ? "Create a secure account for your ScopeSignal workspace."
+      : "Sign in to access your ScopeSignal workspace.";
+    submitButton.textContent = signingUp ? "Create account" : "Sign in";
+    passwordInput.autocomplete = signingUp ? "new-password" : "current-password";
+    resetButton.hidden = signingUp;
+    message.className = "";
   }
 
-  if (data.session) {
-    showMessage(
-      "You are signed in. Your workspace page is ready to open.",
-      "success"
-    );
+  loginTab.addEventListener("click", function () {
+    setMode("login");
+  });
+
+  signupTab.addEventListener("click", function () {
+    setMode("signup");
+  });
+
+  function getWorkspaceUrl() {
+    return new URL("index.html", window.location.href).href;
+  }
+
+  function addWorkspaceLink() {
     const link = document.createElement("a");
     link.href = getWorkspaceUrl();
     link.textContent = "Open ScopeSignal workspace";
@@ -249,104 +216,131 @@ async function init() {
     message.appendChild(document.createElement("br"));
     message.appendChild(link);
   }
-}
 
-form.addEventListener("submit", async (event) => {
-  event.preventDefault();
-
-  if (!supabase) {
-    showMessage("Authentication is not ready. Reload and try again.", "error");
-    return;
-  }
-
-  const email = emailInput.value.trim();
-  const password = passwordInput.value;
-
-  submitButton.disabled = true;
-
-  try {
-    if (mode === "signup") {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: getWorkspaceUrl()
-        }
-      });
-
-      if (error) throw error;
-
-      if (data.session) {
-        showMessage(
-          "Your account was created and you are signed in. Open your workspace below.",
-          "success"
-        );
-        const link = document.createElement("a");
-        link.href = getWorkspaceUrl();
-        link.textContent = "Open ScopeSignal workspace";
-        link.style.display = "inline-block";
-        link.style.marginTop = "12px";
-        message.appendChild(document.createElement("br"));
-        message.appendChild(link);
-      } else {
-        showMessage(
-          "If registration was accepted, check your email for the confirmation link. Open it to confirm your account, then return here to sign in.",
-          "success"
-        );
-      }
-    } else {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-
-      if (error) throw error;
-
-      showMessage("Sign-in successful. Opening your workspace…", "success");
-      window.location.assign(getWorkspaceUrl());
+  async function init() {
+    if (!window.supabase || typeof window.supabase.createClient !== "function") {
+      showMessage(
+        "The Supabase library did not load. Check your internet connection, then reload this page.",
+        "error"
+      );
+      return;
     }
-  } catch (error) {
-    showMessage(error.message || "Something went wrong. Please try again.", "error");
-  } finally {
-    submitButton.disabled = false;
+
+    try {
+      supabaseClient = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_PUBLISHABLE_KEY,
+        {
+          auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: true
+          }
+        }
+      );
+
+      const result = await supabaseClient.auth.getSession();
+
+      if (result.error) throw result.error;
+
+      if (result.data.session) {
+        showMessage("You are signed in. You can open your workspace below.", "success");
+        addWorkspaceLink();
+      }
+    } catch (error) {
+      console.error("ScopeSignal initialization error:", error);
+      showMessage(
+        "ScopeSignal could not initialize authentication. Reload the page and try again.",
+        "error"
+      );
+    }
   }
-});
 
-resetButton.addEventListener("click", async () => {
-  if (!supabase) {
-    showMessage("Authentication is not ready. Reload and try again.", "error");
-    return;
-  }
+  form.addEventListener("submit", async function (event) {
+    event.preventDefault();
 
-  const email = emailInput.value.trim();
+    if (!supabaseClient) {
+      showMessage("Authentication is not ready. Check the message above and reload the page.", "error");
+      return;
+    }
 
-  if (!email) {
-    showMessage("Enter your email address above first.", "info");
-    emailInput.focus();
-    return;
-  }
+    submitButton.disabled = true;
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
 
-  resetButton.disabled = true;
+    try {
+      if (mode === "signup") {
+        const result = await supabaseClient.auth.signUp({
+          email: email,
+          password: password,
+          options: { emailRedirectTo: getWorkspaceUrl() }
+        });
 
-  try {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: getWorkspaceUrl()
-    });
+        if (result.error) throw result.error;
 
-    if (error) throw error;
+        if (result.data.session) {
+          showMessage("Your account was created and you are signed in.", "success");
+          addWorkspaceLink();
+        } else {
+          showMessage(
+            "Registration was submitted. Check your email for a confirmation link before signing in.",
+            "success"
+          );
+        }
+      } else {
+        const result = await supabaseClient.auth.signInWithPassword({
+          email: email,
+          password: password
+        });
 
-    showMessage(
-      "If an account exists for that address, password-reset instructions will be sent to your email.",
-      "success"
-    );
-  } catch (error) {
-    showMessage(error.message || "Could not request a password reset.", "error");
-  } finally {
-    resetButton.disabled = false;
-  }
-});
+        if (result.error) throw result.error;
 
-init();
+        showMessage("Sign-in successful. Opening your workspace…", "success");
+        window.location.assign(getWorkspaceUrl());
+      }
+    } catch (error) {
+      showMessage(error.message || "The request failed. Please try again.", "error");
+    } finally {
+      submitButton.disabled = false;
+    }
+  });
+
+  resetButton.addEventListener("click", async function () {
+    if (!supabaseClient) {
+      showMessage("Authentication is not ready. Reload the page and try again.", "error");
+      return;
+    }
+
+    const email = emailInput.value.trim();
+
+    if (!email) {
+      showMessage("Enter your email address above first.", "info");
+      emailInput.focus();
+      return;
+    }
+
+    resetButton.disabled = true;
+
+    try {
+      const result = await supabaseClient.auth.resetPasswordForEmail(email, {
+        redirectTo: getWorkspaceUrl()
+      });
+
+      if (result.error) throw result.error;
+
+      showMessage(
+        "If an account exists for that address, password-reset instructions will be sent.",
+        "success"
+      );
+    } catch (error) {
+      showMessage(error.message || "Could not request a password reset.", "error");
+    } finally {
+      resetButton.disabled = false;
+    }
+  });
+
+  init();
+})();
 </script>
 </body>
 </html>
