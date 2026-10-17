@@ -937,18 +937,21 @@ async function checkSignedInUser() {
   const { data, error } = await supabaseClient.auth.getUser();
 
   if (error || !data.user) {
-    alert("Please sign in to ScopeSignal to continue.");
-    window.location.href = "auth.html";
-    return;
+    window.location.replace("auth.html");
+    return false;
   }
 
   console.log("ScopeSignal signed in:", data.user.email);
+  return true;
 }
 
-checkSignedInUser().then(() => {
+checkSignedInUser().then((isSignedIn) => {
+  if (!isSignedIn) return;
+
   fillAgreementForm(getAgreement());
   renderHistory();
 });
+
 </script>
 </body>
 </html>
