@@ -1,0 +1,352 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101713">
+<title>Sign in | ScopeSignal</title>
+<meta name="description" content="Securely access your ScopeSignal workspace.">
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #101713;
+  --panel: #18231c;
+  --border: #304438;
+  --text: #f0f5ef;
+  --muted: #aab9ad;
+  --accent: #c7f36b;
+  --danger: #ffb3a9;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: 24px 16px;
+  display: grid;
+  place-items: center;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, sans-serif;
+}
+main { width: 100%; max-width: 440px; }
+.brand {
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+h1 { margin: 18px 0 8px; font-size: 32px; }
+.intro { color: var(--muted); line-height: 1.6; }
+.panel {
+  margin-top: 24px;
+  padding: 24px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+}
+.tabs { display: flex; gap: 8px; margin-bottom: 24px; }
+button, input { font: inherit; }
+button {
+  cursor: pointer;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+.tab {
+  flex: 1;
+  color: var(--muted);
+  background: transparent;
+}
+.tab[aria-selected="true"] {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+label {
+  display: block;
+  margin: 16px 0 7px;
+  font-size: 13px;
+  color: var(--muted);
+}
+input {
+  width: 100%;
+  padding: 13px;
+  color: var(--text);
+  background: #101713;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+input:focus { outline: 2px solid var(--accent); }
+.primary {
+  width: 100%;
+  margin-top: 22px;
+  background: var(--accent);
+  color: #101713;
+  border-color: var(--accent);
+  font-weight: 800;
+}
+.secondary {
+  margin-top: 12px;
+  background: transparent;
+  color: var(--muted);
+  border: 0;
+  padding-left: 0;
+}
+button:disabled { opacity: .6; cursor: wait; }
+#message {
+  display: none;
+  margin-top: 16px;
+  padding: 12px;
+  border-radius: 10px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+#message.show { display: block; }
+#message.error { color: var(--danger); background: #3a211e; }
+#message.success { color: var(--accent); background: #24321d; }
+#message.info { color: var(--text); background: #26332c; }
+a { color: var(--accent); }
+footer {
+  margin-top: 22px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+footer a { margin-right: 12px; }
+</style>
+</head>
+<body>
+<main>
+  <div class="brand">ScopeSignal</div>
+  <h1 id="heading">Welcome back.</h1>
+  <p class="intro" id="intro">Sign in to access your workspace and keep your client agreements organized.</p>
+
+  <section class="panel">
+    <div class="tabs" role="tablist" aria-label="Account access">
+      <button class="tab" id="loginTab" type="button"
+        role="tab" aria-selected="true">Sign in</button>
+      <button class="tab" id="signupTab" type="button"
+        role="tab" aria-selected="false">Create account</button>
+    </div>
+
+    <form id="authForm">
+      <label for="email">Email address</label>
+      <input id="email" name="email" type="email"
+        autocomplete="email" required placeholder="you@example.com">
+
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password"
+        autocomplete="current-password" required minlength="8"
+        placeholder="At least 8 characters">
+
+      <button class="primary" id="submitButton" type="submit">Sign in</button>
+    </form>
+
+    <button class="secondary" id="resetButton" type="button">
+      Forgot your password?
+    </button>
+
+    <div id="message" role="status" aria-live="polite"></div>
+  </section>
+
+  <footer>
+    By using ScopeSignal, you agree to its
+    <a href="terms.html">Terms</a> and
+    <a href="privacy.html">Privacy Policy</a>.
+    <p><a href="index.html">Return to ScopeSignal</a></p>
+  </footer>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+"use strict";
+
+const SUPABASE_URL = "https://ysvbzuemwupajrsoijio.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY =
+  "sb_publishable_5a8RrE4n4TknB0qQZ8zKlQ_2KD5p6vT";
+
+const message = document.getElementById("message");
+const form = document.getElementById("authForm");
+const emailInput = document.getElementById("email");
+const passwordInput = document.getElementById("password");
+const submitButton = document.getElementById("submitButton");
+const resetButton = document.getElementById("resetButton");
+const loginTab = document.getElementById("loginTab");
+const signupTab = document.getElementById("signupTab");
+
+let mode = "login";
+let supabase = null;
+
+function showMessage(text, type = "info") {
+  message.textContent = text;
+  message.className = "show " + type;
+}
+
+function setMode(nextMode) {
+  mode = nextMode;
+  const signingUp = mode === "signup";
+
+  loginTab.setAttribute("aria-selected", String(!signingUp));
+  signupTab.setAttribute("aria-selected", String(signingUp));
+  document.getElementById("heading").textContent =
+    signingUp ? "Create your account." : "Welcome back.";
+  document.getElementById("intro").textContent = signingUp
+    ? "Create a secure account for your ScopeSignal workspace."
+    : "Sign in to access your ScopeSignal workspace.";
+  submitButton.textContent = signingUp ? "Create account" : "Sign in";
+  passwordInput.autocomplete = signingUp ? "new-password" : "current-password";
+  resetButton.hidden = signingUp;
+  message.className = "";
+}
+
+loginTab.addEventListener("click", () => setMode("login"));
+signupTab.addEventListener("click", () => setMode("signup"));
+
+function getWorkspaceUrl() {
+  return new URL("index.html", window.location.href).href;
+}
+
+async function init() {
+  if (!window.supabase || !window.supabase.createClient) {
+    showMessage(
+      "The authentication library could not load. Check your internet connection and reload this page.",
+      "error"
+    );
+    submitButton.disabled = true;
+    return;
+  }
+
+  supabase = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY,
+    {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    }
+  );
+
+  const { data, error } = await supabase.auth.getSession();
+
+  if (error) {
+    showMessage("Could not check your session. Please try again.", "error");
+    return;
+  }
+
+  if (data.session) {
+    showMessage(
+      "You are signed in. Your workspace page is ready to open.",
+      "success"
+    );
+    const link = document.createElement("a");
+    link.href = getWorkspaceUrl();
+    link.textContent = "Open ScopeSignal workspace";
+    link.style.display = "inline-block";
+    link.style.marginTop = "12px";
+    message.appendChild(document.createElement("br"));
+    message.appendChild(link);
+  }
+}
+
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  if (!supabase) {
+    showMessage("Authentication is not ready. Reload and try again.", "error");
+    return;
+  }
+
+  const email = emailInput.value.trim();
+  const password = passwordInput.value;
+
+  submitButton.disabled = true;
+
+  try {
+    if (mode === "signup") {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: getWorkspaceUrl()
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.session) {
+        showMessage(
+          "Your account was created and you are signed in. Open your workspace below.",
+          "success"
+        );
+        const link = document.createElement("a");
+        link.href = getWorkspaceUrl();
+        link.textContent = "Open ScopeSignal workspace";
+        link.style.display = "inline-block";
+        link.style.marginTop = "12px";
+        message.appendChild(document.createElement("br"));
+        message.appendChild(link);
+      } else {
+        showMessage(
+          "If registration was accepted, check your email for the confirmation link. Open it to confirm your account, then return here to sign in.",
+          "success"
+        );
+      }
+    } else {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) throw error;
+
+      showMessage("Sign-in successful. Opening your workspace…", "success");
+      window.location.assign(getWorkspaceUrl());
+    }
+  } catch (error) {
+    showMessage(error.message || "Something went wrong. Please try again.", "error");
+  } finally {
+    submitButton.disabled = false;
+  }
+});
+
+resetButton.addEventListener("click", async () => {
+  if (!supabase) {
+    showMessage("Authentication is not ready. Reload and try again.", "error");
+    return;
+  }
+
+  const email = emailInput.value.trim();
+
+  if (!email) {
+    showMessage("Enter your email address above first.", "info");
+    emailInput.focus();
+    return;
+  }
+
+  resetButton.disabled = true;
+
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: getWorkspaceUrl()
+    });
+
+    if (error) throw error;
+
+    showMessage(
+      "If an account exists for that address, password-reset instructions will be sent to your email.",
+      "success"
+    );
+  } catch (error) {
+    showMessage(error.message || "Could not request a password reset.", "error");
+  } finally {
+    resetButton.disabled = false;
+  }
+});
+
+init();
+</script>
+</body>
+</html>
