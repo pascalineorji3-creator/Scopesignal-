@@ -6,7 +6,8 @@
 <meta name="theme-color" content="#101713">
 <title>ScopeSignal — Know What Changed</title>
 <meta name="description" content="A practical scope-change review workspace for freelancers and independent service providers. Compare client requests with agreed deliverables and prepare a clear response.">
-<style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
 :root {
   color-scheme: dark;
   --bg:#101713;
@@ -292,7 +293,7 @@ footer strong { color:var(--text); }
         <div class="brand-mark">S</div>
         <div>ScopeSignal<small>BY LINA CLOUD</small></div>
       </div>
-      <div class="top-status">SCOPE REVIEW WORKSPACE</div>
+      <a class="top-status" href="#review" style="text-decoration:none; cursor:pointer;">SCOPE REVIEW WORKSPACE</a> 
     </div>
     <nav aria-label="Main navigation">
       <a href="#overview">Overview</a>
@@ -477,9 +478,16 @@ footer strong { color:var(--text); }
     <div>Decision support, not legal advice.<br>Always verify findings against the full agreement.</div>
   </div>
 </footer>
-
 <script>
 "use strict";
+
+const SUPABASE_URL = "https://ysvbzuemwupajrsoijio.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_5a8RrE4n4TknB0qQZ8zKlQ_2KD5p6vT";
+
+const supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+);
 
 const STORAGE_AGREEMENT = "scopesignal_agreement_v1";
 const STORAGE_HISTORY = "scopesignal_history_v1";
@@ -925,8 +933,22 @@ $("clearHistory").addEventListener("click", () => {
   if (safeSave(STORAGE_HISTORY, [])) renderHistory();
 });
 
-fillAgreementForm(getAgreement());
-renderHistory();
+async function checkSignedInUser() {
+  const { data, error } = await supabaseClient.auth.getUser();
+
+  if (error || !data.user) {
+    alert("Please sign in to ScopeSignal to continue.");
+    window.location.href = "auth.html";
+    return;
+  }
+
+  console.log("ScopeSignal signed in:", data.user.email);
+}
+
+checkSignedInUser().then(() => {
+  fillAgreementForm(getAgreement());
+  renderHistory();
+});
 </script>
 </body>
 </html>
