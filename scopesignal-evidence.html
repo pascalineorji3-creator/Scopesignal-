@@ -19,7 +19,15 @@ main{padding:30px 0 55px}.eyebrow{color:var(--green);font-size:11px;font-weight:
 <main class="shell">
 <div class="eyebrow">Evidence workspace</div>
 <h1>Keep the conversation.<br>Keep the context.</h1>
-<p>Keep the original screenshots, extract and correct readable text, and download copies. Sign in to save evidence privately to your ScopeSignal account.</p>
+<p>Keep the original screenshots, turn messages into a readable transcript, and preserve evidence alongside the client agreement it supports.</p>
+<div id="signInGate" class="panel">
+<h2>Start with your ScopeSignal account</h2>
+<p class="hint">Sign in or create a free account before importing screenshots or pasting conversation text. Your evidence workspace will open after we verify your session.</p>
+<div class="notice">You can explore ScopeSignal without sharing a private conversation. For privacy, evidence import and processing are available only after sign-in.</div>
+<div class="actions"><a class="btn primary" href="auth.html">Sign in or create account</a><a class="btn" href="index.html">Explore ScopeSignal first</a><button id="checkSignInBtn">I've signed in — check again</button></div>
+<div id="gateStatus" class="status" role="status">Checking your ScopeSignal sign-in…</div>
+</div>
+<div id="evidenceTools" class="hidden">
 <div class="panel">
 <h2>1. Choose screenshots</h2>
 <p class="hint">Select multiple JPEG, PNG, or WebP screenshots, up to 10 MB each. OCR runs in your browser. Clear, high-resolution screenshots usually work best.</p>
@@ -38,11 +46,11 @@ main{padding:30px 0 55px}.eyebrow{color:var(--green);font-size:11px;font-weight:
 <div class="panel">
 <h2>3. Save evidence privately to your account</h2>
 <p class="hint">Sign in first. Original screenshots, the reviewed transcript, and a small batch record are uploaded to the private <code>scopesignal-evidence</code> bucket under your account folder. No public links are created.</p>
-<div id="authActions" class="actions"><a class="btn primary" href="auth.html">Sign in to ScopeSignal</a><button id="checkSignInBtn">I have signed in — check again</button></div>
 <label for="evidenceLabel">Optional label for this batch</label>
 <input id="evidenceLabel" type="text" maxlength="100" placeholder="e.g. Client A — website revisions">
 <div class="actions"><button id="uploadBtn" class="primary" disabled>Save screenshots + reviewed text privately</button></div>
 <div id="uploadStatus" class="status">Cloud saving requires an active ScopeSignal sign-in.</div>
+</div>
 </div>
 <div class="panel">
 <h2>Privacy and limits</h2>
@@ -60,7 +68,7 @@ let signedInUser=null,selectedFiles=[],worker=null;
 function setStatus(id,message,isError=false){const el=$(id);el.textContent=message;el.classList.toggle("error",isError)}
 function safeFileName(name){return name.normalize("NFKD").replace(/[^a-zA-Z0-9._-]/g,"_").replace(/_+/g,"_").slice(-100)||"evidence"}
 function updateButtons(){const has=selectedFiles.length>0;$("extractBtn").disabled=!has;$("downloadImagesBtn").disabled=!has;$("clearBtn").disabled=!has;$("uploadBtn").disabled=!signedInUser||(!has&&!$("ocrText").value.trim())}
-async function checkUser(showMessage=true){try{const {data,error}=await supabaseClient.auth.getUser();signedInUser=(!error&&data.user)?data.user:null;if(signedInUser){setStatus("ocrStatus","Signed in. Select screenshots to begin.");setStatus("uploadStatus",`Signed in as ${signedInUser.email||"your ScopeSignal account"}. Evidence can be saved privately.`)}else if(showMessage){setStatus("ocrStatus","You are not signed in. You can still use OCR and download copies, but private cloud saving requires sign-in.");setStatus("uploadStatus","Not signed in. Tap “Sign in to ScopeSignal”, then return here and tap “I have signed in — check again”.",true)}$("authActions").classList.toggle("hidden",!!signedInUser);updateButtons();return !!signedInUser}catch(e){signedInUser=null;updateButtons();if(showMessage)setStatus("ocrStatus","Could not verify sign-in. Check your connection and try again.",true);return false}}
+async function checkUser(showMessage=true){try{const {data,error}=await supabaseClient.auth.getUser();signedInUser=(!error&&data.user)?data.user:null;$("signInGate").classList.toggle("hidden",!!signedInUser);$("evidenceTools").classList.toggle("hidden",!signedInUser);if(signedInUser){setStatus("gateStatus",`Signed in as ${signedInUser.email||"your ScopeSignal account"}. Your private evidence workspace is ready.`);setStatus("ocrStatus","Signed in. Select screenshots to begin.");setStatus("uploadStatus","Your private evidence workspace is ready. Save reviewed evidence when you are satisfied with it.")}else if(showMessage){setStatus("gateStatus","You are not signed in yet. Sign in or create an account to open the Evidence Desk.");}updateButtons();return !!signedInUser}catch(e){signedInUser=null;$("signInGate").classList.remove("hidden");$("evidenceTools").classList.add("hidden");updateButtons();if(showMessage)setStatus("gateStatus","Could not verify sign-in. Check your connection and try again.",true);return false}}
 function renderFiles(){const list=$("fileList");list.replaceChildren();selectedFiles.forEach((file,i)=>{const card=document.createElement("div");card.className="file";const img=document.createElement("img");img.alt="Screenshot preview";const url=URL.createObjectURL(file);img.src=url;const details=document.createElement("div");const title=document.createElement("strong");title.textContent=file.name;const meta=document.createElement("small");meta.textContent=`${(file.size/1024/1024).toFixed(2)} MB · ${file.type||"unknown type"}`;const remove=document.createElement("button");remove.textContent="Remove";remove.type="button";remove.addEventListener("click",()=>{selectedFiles.splice(i,1);renderFiles()});details.append(title,meta,document.createElement("br"),remove);card.append(img,details);list.append(card)});updateButtons()}
 $("files").addEventListener("change",e=>{const incoming=[...e.target.files];const valid=incoming.filter(f=>["image/jpeg","image/png","image/webp"].includes(f.type)&&f.size<=10*1024*1024);const rejected=incoming.length-valid.length;selectedFiles=[...selectedFiles,...valid].slice(0,20);renderFiles();setStatus("ocrStatus",`${selectedFiles.length} screenshot(s) selected.${rejected?` ${rejected} file(s) skipped: use JPEG, PNG or WebP under 10 MB.`:""}${selectedFiles.length>=20?" Maximum 20 files per batch.":""}`,rejected>0);e.target.value=""});
 $("clearBtn").addEventListener("click",()=>{selectedFiles=[];renderFiles();setStatus("ocrStatus","Selection cleared.")});
