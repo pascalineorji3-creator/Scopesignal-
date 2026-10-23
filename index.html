@@ -204,31 +204,61 @@ async function initialiseWorkspace(){
 initialiseWorkspace();
 </script>
 
- <script>
+<script>
 (function () {
-  const saved = localStorage.getItem("scopesignal_pending_share_v1");
+  "use strict";
+
+  const storageKey = "scopesignal_pending_share_v1";
+  const saved = localStorage.getItem(storageKey);
+
   if (!saved) return;
 
   try {
     const shared = JSON.parse(saved);
+
     const requestField = document.getElementById("request");
     const contextField = document.getElementById("context");
 
-    if (!requestField || !contextField) return;
+    if (!requestField || !contextField) {
+      console.error("ScopeSignal handoff: review fields were not found.");
+      return;
+    }
 
-    requestField.value = [
-      shared.title,
-      shared.text,
-      shared.url
-    ].filter(Boolean).join("\n\n");
+    // Keep the complete text received from the share page.
+    // Do not prepend the title again: it may already be in that text.
+    const sharedText = String(shared.text || "").trim();
+    const sharedUrl = String(shared.url || "").trim();
+    const sharedTitle = String(shared.title || "").trim();
 
-    contextField.value = shared.context || "";
+    const requestParts = [];
 
-    localStorage.removeItem("scopesignal_pending_share_v1");
+    if (sharedText) {
+      requestParts.push(sharedText);
+    } else if (sharedTitle) {
+      requestParts.push(sharedTitle);
+    }
+
+    if (
+      sharedUrl &&
+      !requestParts.join("\n\n").includes(sharedUrl)
+    ) {
+      requestParts.push("Shared link: " + sharedUrl);
+    }
+
+    if (requestParts.length > 0) {
+      requestField.value = requestParts.join("\n\n");
+    }
+
+    contextField.value = String(shared.context || "");
+
+    // Clear the handoff only after both fields have been populated.
+    if (requestParts.length > 0) {
+      localStorage.removeItem(storageKey);
+    }
   } catch (error) {
-    console.error("Could not load shared content:", error);
+    console.error("ScopeSignal handoff failed:", error);
   }
 })();
- </script>
+</script>
 </body>
-</html>
+<html>
