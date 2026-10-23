@@ -1,0 +1,20 @@
+{
+  "name": "ScopeSignal — Know What Changed",
+  "short_name": "ScopeSignal",
+  "start_url": "./share.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#101713",
+  "theme_color": "#101713",
+  "description": "Review client requests against your agreed project scope.",
+  "share_target": {
+    "action": "./share.html",
+    "method": "GET",
+    "enctype": "application/x-www-form-urlencoded",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  }
+}
