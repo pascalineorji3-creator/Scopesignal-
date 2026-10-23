@@ -203,5 +203,32 @@ async function initialiseWorkspace(){
 }
 initialiseWorkspace();
 </script>
+
+ <script>
+(function () {
+  const saved = localStorage.getItem("scopesignal_pending_share_v1");
+  if (!saved) return;
+
+  try {
+    const shared = JSON.parse(saved);
+    const requestField = document.getElementById("request");
+    const contextField = document.getElementById("context");
+
+    if (!requestField || !contextField) return;
+
+    requestField.value = [
+      shared.title,
+      shared.text,
+      shared.url
+    ].filter(Boolean).join("\n\n");
+
+    contextField.value = shared.context || "";
+
+    localStorage.removeItem("scopesignal_pending_share_v1");
+  } catch (error) {
+    console.error("Could not load shared content:", error);
+  }
+})();
+ </script>
 </body>
 </html>
