@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101713">
+<meta name="description" content="Review shared client requests against your ScopeSignal project agreement.">
+<title>Review shared content | ScopeSignal</title>
+<style>
+:root{color-scheme:dark;--bg:#101713;--panel:#19221c;--panel2:#202b24;--line:#344238;--text:#f1f5ee;--muted:#a6b4a8;--green:#c5f36a;--red:#ffaaa0}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.shell{width:min(760px,100% - 28px);margin:0 auto;padding:24px 0 44px}
+header{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:8px 0 22px;border-bottom:1px solid var(--line)}
+.brand{font-weight:800;letter-spacing:-.04em;font-size:21px}.brand span{color:var(--green)}
+.pill{border:1px solid var(--line);border-radius:999px;padding:6px 10px;color:var(--muted);font-size:11px;letter-spacing:.08em}
+.eyebrow{color:var(--green);font-size:12px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;margin-top:26px}
+h1{font-size:clamp(30px,7vw,46px);line-height:1.08;letter-spacing:-.045em;margin:9px 0 14px}
+p{color:var(--muted);margin:8px 0 18px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:clamp(17px,4vw,26px);margin-top:22px}
+label{display:block;font-size:13px;font-weight:750;margin:15px 0 7px}
+textarea,input{display:block;width:100%;font:inherit;color:var(--text);background:#111914;border:1px solid var(--line);border-radius:12px;padding:13px;outline-offset:3px}
+textarea{min-height:180px;resize:vertical}textarea:focus,input:focus{outline:2px solid var(--green)}
+button,.linkbtn{display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:12px;padding:12px 16px;font:inherit;font-weight:750;text-decoration:none;cursor:pointer}
+.primary{background:var(--green);color:#172014;border-color:var(--green)}.secondary{background:var(--panel2);color:var(--text)}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+.hint{font-size:12px;color:var(--muted);margin-top:9px}
+.notice{border:1px solid #586545;background:#202b24;border-radius:12px;padding:13px;font-size:13px;color:#dce8d1;margin-top:16px}
+.error{color:var(--red);display:none}.status{min-height:24px;color:var(--green);font-size:13px;margin-top:12px}
+footer{border-top:1px solid var(--line);margin-top:26px;padding-top:16px;font-size:12px;color:var(--muted)}
+a{color:var(--green)}
+@media(max-width:480px){header{align-items:flex-start;flex-direction:column}.pill{align-self:flex-start}.actions button,.actions .linkbtn{width:100%}}
+</style>
+</head>
+<body>
+<div class="shell">
+<header>
+  <div class="brand">Scope<span>Signal</span></div>
+  <div class="pill">SHARED CONTENT INBOX</div>
+</header>
+<main>
+  <div class="eyebrow">From your conversation to your review</div>
+  <h1>Bring the request into ScopeSignal.</h1>
+  <p>Check what was shared, add any relevant context, then continue to your workspace. Nothing is sent to your client automatically.</p>
+  <section class="card" aria-labelledby="shared-heading">
+    <h2 id="shared-heading">Shared content</h2>
+    <p id="sourceSummary">Review the content below before continuing.</p>
+    <label for="sharedText">Message or shared text</label>
+    <textarea id="sharedText" autocomplete="off" spellcheck="true" placeholder="Shared text will appear here. You can edit it before continuing."></textarea>
+    <label for="extraContext">Additional context (optional)</label>
+    <textarea id="extraContext" style="min-height:100px" placeholder="For example: what was agreed previously, or why this request may be a change."></textarea>
+    <div class="notice">Privacy check: remove passwords, payment details, private information, or anything you do not want processed. Only continue with content you are authorised to share.</div>
+    <p id="emptyError" class="error" role="alert">No message text was received. You can paste or type the relevant request above before continuing.</p>
+    <div class="actions">
+      <button type="button" class="primary" id="continueBtn">Continue to ScopeSignal review →</button>
+      <button type="button" class="secondary" id="clearBtn">Clear shared content</button>
+    </div>
+    <div id="status" class="status" role="status" aria-live="polite"></div>
+    <p class="hint">ScopeSignal provides decision support, not legal advice. Always verify the original conversation and your agreement.</p>
+  </section>
+  <p><a href="./index.html">← Return to ScopeSignal workspace</a></p>
+</main>
+<footer>Independent project by Lina Cloud · Your shared text stays in this browser until you continue. Continuing saves a temporary handoff locally so the workspace can receive it.</footer>
+</div>
+<script>
+(function(){
+  "use strict";
+  const $ = id => document.getElementById(id);
+  const params = new URLSearchParams(window.location.search);
+  const title = (params.get("title") || "").trim();
+  const sharedText = (params.get("text") || "").trim();
+  const sharedUrl = (params.get("url") || "").trim();
+  const pieces = [];
+  if (title) pieces.push("Shared item: " + title);
+  if (sharedText) pieces.push(sharedText);
+  if (sharedUrl && !sharedText.includes(sharedUrl)) pieces.push("Shared link: " + sharedUrl);
+  $("sharedText").value = pieces.join("\n\n");
+  $("sourceSummary").textContent = pieces.length
+    ? "Content received. Please review and edit it before continuing."
+    : "Nothing arrived from the Share menu. You can still paste or type the relevant request below.";
+  $("emptyError").style.display = pieces.length ? "none" : "block";
+
+  $("clearBtn").addEventListener("click", function(){
+    $("sharedText").value = "";
+    $("extraContext").value = "";
+    $("status").textContent = "Content cleared from this form.";
+    $("emptyError").style.display = "block";
+  });
+
+  $("continueBtn").addEventListener("click", function(){
+    const text = $("sharedText").value.trim();
+    const context = $("extraContext").value.trim();
+    if (!text) {
+      $("emptyError").style.display = "block";
+      $("sharedText").focus();
+      return;
+    }
+    const payload = {
+      title: title,
+      text: text,
+      url: sharedUrl,
+      context: context,
+      receivedAt: new Date().toISOString()
+    };
+    try {
+      localStorage.setItem("scopesignal_pending_share_v1", JSON.stringify(payload));
+      $("status").textContent = "Handoff saved. Opening your ScopeSignal workspace…";
+      window.location.href = "./index.html#review";
+    } catch (error) {
+      $("status").textContent = "This browser could not save the handoff. Please copy the request text, open ScopeSignal, and paste it into the review form.";
+    }
+  });
+})();
+</script>
+</body>
+</html>
